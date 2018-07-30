@@ -61,51 +61,41 @@ class mod_customcert_mod_form extends moodleform_mod {
             $mform->addElement('selectyesno', 'emailstudents', get_string('emailstudents', 'customcert'));
             $mform->setDefault('emailstudents', get_config('customcert', 'emailstudents'));
             $mform->addHelpButton('emailstudents', 'emailstudents', 'customcert');
+            $mform->setType('emailstudents', PARAM_INT);
             $firstoption = 'emailstudents';
-        } else {
-            $mform->addElement('hidden', 'emailstudents', get_config('customcert', 'emailstudents'));
         }
-        $mform->setType('emailstudents', PARAM_INT);
 
         if (has_capability('mod/customcert:manageemailteachers', $this->get_context())) {
             $mform->addElement('selectyesno', 'emailteachers', get_string('emailteachers', 'customcert'));
             $mform->setDefault('emailteachers', get_config('customcert', 'emailteachers'));
             $mform->addHelpButton('emailteachers', 'emailteachers', 'customcert');
+            $mform->setType('emailteachers', PARAM_INT);
             $firstoption = empty($firstoption) ? 'emailteachers' : $firstoption;
-        } else {
-            $mform->addElement('hidden', 'emailteachers', get_config('customcert', 'emailteachers'));
         }
-        $mform->setType('emailteachers', PARAM_INT);
 
         if (has_capability('mod/customcert:manageemailothers', $this->get_context())) {
             $mform->addElement('text', 'emailothers', get_string('emailothers', 'customcert'), array('size' => '40'));
             $mform->addHelpButton('emailothers', 'emailothers', 'customcert');
             $mform->setDefault('emailothers', get_config('customcert', 'emailothers'));
+            $mform->setType('emailothers', PARAM_TEXT);
             $firstoption = empty($firstoption) ? 'emailothers' : $firstoption;
-        } else {
-            $mform->addElement('hidden', 'emailothers', get_config('customcert', 'emailothers'));
         }
-        $mform->setType('emailothers', PARAM_TEXT);
 
         if (has_capability('mod/customcert:manageverifyany', $this->get_context())) {
             $mform->addElement('selectyesno', 'verifyany', get_string('verifycertificateanyone', 'customcert'));
             $mform->addHelpButton('verifyany', 'verifycertificateanyone', 'customcert');
             $mform->setDefault('verifyany', get_config('customcert', 'verifyany'));
+            $mform->setType('verifyany', PARAM_INT);
             $firstoption = empty($firstoption) ? 'verifyany' : $firstoption;
-        } else {
-            $mform->addElement('hidden', 'verifyany', get_config('customcert', 'verifyany'));
         }
-        $mform->setType('verifyany', PARAM_INT);
 
         if (has_capability('mod/customcert:managerequiredtime', $this->get_context())) {
             $mform->addElement('text', 'requiredtime', get_string('coursetimereq', 'customcert'), array('size' => '3'));
             $mform->addHelpButton('requiredtime', 'coursetimereq', 'customcert');
             $mform->setDefault('requiredtime', get_config('customcert', 'coursetimereq'));
+            $mform->setType('requiredtime', PARAM_INT);
             $firstoption = empty($firstoption) ? 'requiredtime' : $firstoption;
-        } else {
-            $mform->addElement('hidden', 'requiredtime', 0);
         }
-        $mform->setType('requiredtime', PARAM_INT);
 
         if (has_capability('mod/customcert:manageprotection', $this->get_context())) {
             $mform->addElement('checkbox', 'protection_print', get_string('setprotection', 'customcert'),
@@ -116,15 +106,11 @@ class mod_customcert_mod_form extends moodleform_mod {
             $mform->setDefault('protection_print', get_config('customcert', 'protection_print'));
             $mform->setDefault('protection_modify', get_config('customcert', 'protection_modify'));
             $mform->setDefault('protection_copy', get_config('customcert', 'protection_copy'));
+            $mform->setType('protection_print', PARAM_BOOL);
+            $mform->setType('protection_modify', PARAM_BOOL);
+            $mform->setType('protection_copy', PARAM_BOOL);
             $firstoption = empty($firstoption) ? 'protection_print' : $firstoption;
-        } else {
-            $mform->addElement('hidden', 'protection_print', get_config('customcert', 'protection_print'));
-            $mform->addElement('hidden', 'protection_modify', get_config('customcert', 'protection_modify'));
-            $mform->addElement('hidden', 'protection_copy', get_config('customcert', 'protection_copy'));
         }
-        $mform->setType('protection_print', PARAM_BOOL);
-        $mform->setType('protection_modify', PARAM_BOOL);
-        $mform->setType('protection_copy', PARAM_BOOL);
 
         if (!empty($firstoption)) {
             $mform->insertElementBefore($optionsheader, $firstoption);
@@ -152,6 +138,44 @@ class mod_customcert_mod_form extends moodleform_mod {
             }
             if (in_array(\mod_customcert\certificate::PROTECTION_COPY, $protection)) {
                 $defaultvalues['protection_copy'] = 1;
+            }
+        }
+    }
+
+    /**
+     * Get a list of all custom elements in the form.
+     *
+     * @return array
+     */
+    protected function get_custom_elements() {
+        return [
+            'emailstudents',
+            'emailteachers',
+            'emailothers',
+            'verifyany',
+            'requiredtime',
+            'protection_print',
+            'protection_modify',
+            'protection_copy'
+        ];
+    }
+
+    /**
+     * Post process form data.
+     *
+     * @param \stdClass $data
+     *
+     * @throws \dml_exception
+     */
+    public function data_postprocessing($data) {
+        parent::data_postprocessing($data);
+
+        // Add default values for missing elements when we create a new activity.
+        if (!empty($data->add)) {
+            foreach ($this->get_custom_elements() as $element) {
+                if (!isset($data->$element)) {
+                    $data->$element = get_config('customcert', $element);
+                }
             }
         }
     }
